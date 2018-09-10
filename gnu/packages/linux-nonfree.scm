@@ -6,6 +6,7 @@
 ;;; Copyright © 2015 Federico Beffa <beffa@fbengineering.ch>
 ;;; Copyright © 2015 Taylan Ulrich Bayırlı/Kammer <taylanbayirli@gmail.com>
 ;;; Copyright © 2015, 2017 Andy Wingo <wingo@igalia.com>
+;;; Copyright © 2018 Joe Hillenbrand <joehillen@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -27,199 +28,35 @@
   #:use-module (gnu packages linux)
   #:use-module (gnu packages tls)
   #:use-module (guix build-system trivial)
-  #:use-module (guix git-download)
   #:use-module (guix packages)
   #:use-module (guix download))
 
-(define (linux-nonfree-urls version)
+(define (linux-nonfree-url version)
   "Return a list of URLs for Linux-Nonfree VERSION."
   (list (string-append
          "https://www.kernel.org/pub/linux/kernel/v4.x/"
          "linux-" version ".tar.xz")))
 
 (define-public linux-nonfree
-  (let* ((version "4.18.5"))
+  (let* ((version "4.18.7"))
     (package
       (inherit linux-libre)
       (name "linux-nonfree")
       (version version)
       (source (origin
                 (method url-fetch)
-                (uri (linux-nonfree-urls version))
+                (uri (linux-nonfree-url version))
                 (sha256
                  (base32
-                  "1ga7ys6s5d9dk1ly9722sbik1y6kbc3w6nw9pw86zpzdh0v0l2gv"))))
+                  "0cgpb8zx7ckd9lmmaas6r1vszbz9lhrn4w1njw3yaw9a4rg44fzh"))))
       (synopsis "Mainline Linux kernel, nonfree binary blobs included.")
       (description "Linux is a kernel.")
       (license license:gpl2)
       (home-page "http://kernel.org/"))))
-
-;;; Forgive me Stallman for I have sinned.
-
-(define-public radeon-firmware-non-free
-  (package
-    (name "radeon-firmware-non-free")
-    (version "65b1c68c63f974d72610db38dfae49861117cae2")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "git://git.kernel.org/pub/scm/linux/kernel/git/firmware/linux-firmware.git")
-                    (commit version)))
-              (sha256
-               (base32
-                "1anr7fblxfcrfrrgq98kzy64yrwygc2wdgi47skdmjxhi3wbrvxz"))))
-    (build-system trivial-build-system)
-    (arguments
-     `(#:modules ((guix build utils))
-       #:builder (begin
-                   (use-modules (guix build utils))
-                   (let ((source (assoc-ref %build-inputs "source"))
-                         (fw-dir (string-append %output "/lib/firmware/radeon/")))
-                     (mkdir-p fw-dir)
-                     (for-each (lambda (file)
-                                 (copy-file file
-                                            (string-append fw-dir "/"
-                                                           (basename file))))
-                               (find-files source
-                                           (lambda (file stat)
-                                             (string-contains file "radeon"))))
-                     #t))))
-
-    (home-page "")
-    (synopsis "Non-free firmware for Radeon integrated chips")
-    (description "Non-free firmware for Radeon integrated chips")
-    ;; FIXME: What license?
-    (license (license:non-copyleft "http://git.kernel.org/?p=linux/kernel/git/firmware/linux-firmware.git;a=blob_plain;f=LICENCE.radeon_firmware;hb=HEAD"))))
-
-(define-public ath10k-firmware-non-free
-  (package
-    (name "ath10k-firmware-non-free")
-    (version "65b1c68c63f974d72610db38dfae49861117cae2")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "git://git.kernel.org/pub/scm/linux/kernel/git/firmware/linux-firmware.git")
-                    (commit version)))
-              (sha256
-               (base32
-                "1anr7fblxfcrfrrgq98kzy64yrwygc2wdgi47skdmjxhi3wbrvxz"))))
-    (build-system trivial-build-system)
-    (arguments
-     `(#:modules ((guix build utils))
-       #:builder (begin
-                   (use-modules (guix build utils))
-                   (let ((source (assoc-ref %build-inputs "source"))
-                         (fw-dir (string-append %output "/lib/firmware/")))
-                     (mkdir-p fw-dir)
-                     (copy-recursively (string-append source "/ath10k")
-                                       (string-append fw-dir "/ath10k"))
-                     #t))))
-
-    (home-page "")
-    (synopsis "Non-free firmware for ath10k wireless chips")
-    (description "Non-free firmware for ath10k integrated chips")
-    ;; FIXME: What license?
-    (license (license:non-copyleft "http://git.kernel.org/?p=linux/kernel/git/firmware/linux-firmware.git;a=blob_plain;f=LICENCE.radeon_firmware;hb=HEAD"))))
-
-(define-public linux-firmware-non-free
-  (package
-    (name "linux-firmware-non-free")
-    (version "65b1c68c63f974d72610db38dfae49861117cae2")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "git://git.kernel.org/pub/scm/linux/kernel/git/firmware/linux-firmware.git")
-                    (commit version)))
-              (sha256
-               (base32
-                "1anr7fblxfcrfrrgq98kzy64yrwygc2wdgi47skdmjxhi3wbrvxz"))))
-    (build-system trivial-build-system)
-    (arguments
-     `(#:modules ((guix build utils))
-       #:builder (begin
-                   (use-modules (guix build utils))
-                   (let ((source (assoc-ref %build-inputs "source"))
-                         (fw-dir (string-append %output "/lib/firmware/")))
-                     (mkdir-p fw-dir)
-                     (copy-recursively source fw-dir)
-                     #t))))
-
-    (home-page "")
-    (synopsis "Non-free firmware for Linux")
-    (description "Non-free firmware for Linux")
-    ;; FIXME: What license?
-    (license (license:non-copyleft "http://git.kernel.org/?p=linux/kernel/git/firmware/linux-firmware.git;a=blob_plain;f=LICENCE.radeon_firmware;hb=HEAD"))))
 
 (define-public perf-nonfree
   (package
     (inherit perf)
     (name "perf-nonfree")
     (version (package-version linux-nonfree))
-    (source (package-source linux-nonfree))
-    (license (package-license linux-nonfree))))
-
-(define-public iwlwifi-firmware-nonfree
-  (package
-    (name "iwlwifi-firmware-nonfree")
-    (version "65b1c68c63f974d72610db38dfae49861117cae2")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "git://git.kernel.org/pub/scm/linux/kernel/git/firmware/linux-firmware.git")
-                    (commit version)))
-              (sha256
-               (base32
-                "1anr7fblxfcrfrrgq98kzy64yrwygc2wdgi47skdmjxhi3wbrvxz"))))
-    (build-system trivial-build-system)
-    (arguments
-     `(#:modules ((guix build utils))
-       #:builder (begin
-                   (use-modules (guix build utils))
-                   (let ((source (assoc-ref %build-inputs "source"))
-                         (fw-dir (string-append %output "/lib/firmware")))
-                     (mkdir-p fw-dir)
-                     (for-each (lambda (file)
-                                 (copy-file file
-                                            (string-append fw-dir "/"
-                                                           (basename file))))
-                               (find-files source "iwlwifi-.*\\.ucode$|LICENCE\\.iwlwifi_firmware$"))
-                     #t))))
-
-    (home-page "https://wireless.wiki.kernel.org/en/users/drivers/iwlwifi")
-    (synopsis "Non-free firmware for Intel wifi chips")
-    (description "Non-free firmware for Intel wifi chips")
-    ;; FIXME: What license?
-    (license (license:non-copyleft "http://git.kernel.org/?p=linux/kernel/git/firmware/linux-firmware.git;a=blob_plain;f=LICENCE.iwlwifi_firmware;hb=HEAD"))))
-
-(define-public ibt-hw-firmware-nonfree
-  (package
-    (name "ibt-hw-firmware-nonfree")
-    (version "65b1c68c63f974d72610db38dfae49861117cae2")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "git://git.kernel.org/pub/scm/linux/kernel/git/firmware/linux-firmware.git")
-                    (commit version)))
-              (sha256
-               (base32
-                "1anr7fblxfcrfrrgq98kzy64yrwygc2wdgi47skdmjxhi3wbrvxz"))))
-    (build-system trivial-build-system)
-    (arguments
-     `(#:modules ((guix build utils))
-       #:builder (begin
-                   (use-modules (guix build utils))
-                   (let ((source (assoc-ref %build-inputs "source"))
-                         (fw-dir (string-append %output "/lib/firmware/intel")))
-                     (mkdir-p fw-dir)
-                     (for-each (lambda (file)
-                                 (copy-file file
-                                            (string-append fw-dir "/"
-                                                           (basename file))))
-                               (find-files source "ibt-hw-.*\\.bseq$|LICENCE\\.ibt_firmware$"))
-                     #t))))
-
-    (home-page "http://www.intel.com/support/wireless/wlan/sb/CS-016675.htm")
-    (synopsis "Non-free firmware for Intel bluetooth chips")
-    (description "Non-free firmware for Intel bluetooth chips")
-    ;; FIXME: What license?
-    (license (license:non-copyleft "http://git.kernel.org/?p=linux/kernel/git/firmware/linux-firmware.git;a=blob_plain;f=LICENCE.ibt_firmware;hb=HEAD"))))
+    (source (package-source linux-nonfree))))
